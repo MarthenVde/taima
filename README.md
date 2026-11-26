@@ -3,4 +3,7 @@ The superior pomodoro timer
 
 # TODO
 
-- Working timer with overflow
+[x] Working timer with overflow
+[]  add session icons
+[]  Add display window for graphics
+[]  music button
