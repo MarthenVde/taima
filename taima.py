@@ -1,6 +1,7 @@
 import sys
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
+from PyQt5.QtGui import *
 
 
 class SessionCounter(QWidget):
@@ -139,19 +140,68 @@ class AnimationScreen(QWidget):
 
 class Tasks(QWidget):
     def __init__(self):
-        super().__init()
+        super().__init__()
+        self._main_task_layout = QVBoxLayout()
+        self.task_list = QListWidget()
+        
+        self._field_layout = QHBoxLayout()
+        self._input_box = QLineEdit()
+        self._input_box.setPlaceholderText("Add Task...")
 
+        self._add_task_btn = QPushButton("Add Task")
+        self._add_task_btn.setFixedWidth(100)
+
+        self._field_layout.addWidget(self._input_box)
+        self._field_layout.addWidget(self._add_task_btn)
+
+        self._main_task_layout.addLayout(self._field_layout)
+        self._main_task_layout.addWidget(self.task_list)
+
+        self.setLayout(self._main_task_layout)
+
+        # Connect buttons
+        self._add_task_btn.clicked.connect(self.add_task)
+        self.task_list.itemChanged.connect(self.on_item_changed)
+
+    def add_task(self):
+        content = self._input_box.text()
+        if len(content) <= 0 or len(content) >= 25:
+            return
+
+        self._input_box.clear()
+        item = QListWidgetItem(content, self.task_list)
+        item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
+        item.setCheckState(Qt.CheckState.Unchecked)
+
+    def on_item_changed(self, changed_item: QListWidgetItem):
+        # Block signals temporarily so changing color/font doesn't re-trigger itemChanged
+        self.task_list.blockSignals(True)
+        font = changed_item.font()
+        
+        if changed_item.checkState() == Qt.CheckState.Checked:
+            changed_item.setForeground(QBrush(QColor("grey")))
+            font.setStrikeOut(True)
+        else:
+            # Reset to default system theme text color
+            default_color = self.task_list.palette().text().color()
+            changed_item.setForeground(QBrush(default_color))
+            font.setStrikeOut(False)
+
+        changed_item.setFont(font)
+        self.task_list.blockSignals(False)
+        
 class TimerApp(QMainWindow):
     def __init__(self):
         super().__init__()
 
         # main layout
-        self.main_layout = QGridLayout()
+        self.main_layout = QHBoxLayout()
         self.animation_screen = AnimationScreen()
-        self.timer_widget = TimerWidget()
+        self.timer= TimerWidget()
+        self.tasks = Tasks()
 
-        self.main_layout.addWidget(self.timer_widget, 0, 0)
-        self.main_layout.addWidget(self.animation_screen, 0, 1)
+        self.main_layout.addWidget(self.timer)
+        self.main_layout.addWidget(self.tasks)
 
         self.main_widget = QWidget()
         self.main_widget.setLayout(self.main_layout)
